@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* --background: #0a0a0a;
+    --foreground: #ededed; */
+  }
+  .pause {
+    animation-play-state: paused;
+  }
+  @variants responsive {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes flip {
+  0% {
+    transform: translateY(0deg);
+  }
+  50% {
+    transform: translateY(180deg);
+  }
+  100% {
+    transform: translateY(360deg);
+  }
+}
+
+.animate-flip {
+  animation: flip 6s infinite;
+}
+
+
+
+
+.loader2 {
+  width: 48px;
+  height: 48px;
+  border: 3px dotted #e8e8e8;
+  border-style: solid solid dotted dotted;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  box-sizing: border-box;
+  animation: rotation2 2s linear infinite;
+}
+
+.loader2::after {
+  content: '';
+  box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  border: 3px dotted #052440;
+  border-style: solid solid dotted;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  animation: rotationBack2 1s linear infinite;
+  transform-origin: center center;
+}
+
+/* checkbox  */
+
+
+.checkbox-container {
+  @apply relative inline-flex items-center gap-[11px] cursor-pointer;
+}
+
+.checkbox-input {
+  @apply hidden;
+}
+
+/* square */
+.checkbox-checkmark {
+  @apply bg-[#ffffff] border border-[#D8DAE5] rounded-[5px] w-[45px] h-[25px] flex items-center justify-center cursor-pointer;
+}
+
+.checkbox-input:checked + .checkbox-checkmark {
+  @apply bg-[#A51D21] border-[#A51D21] border-none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='10' viewBox='0 0 12 10'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' d='M1 5l3 3 7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.custom-input:hover {
+  border-color: #A51D21; /* Hover border color */
+}
+
+.custom-input:disabled {
+  background-color: #f9f9f9; /* Disabled background */
+  color: #ccc; /* Disabled text color */
+  border-color: #ddd; /* Disabled border color */
+  cursor: not-allowed;
+}
+
+input[type='radio'] {
+  -webkit-appearance:none;
+  width:25px;
+  height:20px;
+  border:3px solid #A51D21;
+  border-radius:50%;
+  outline:none;
+}
+input[type='radio']:hover {
+  box-shadow:0 0 5px 0px #A51D21 inset;
+}
+input[type='radio']:before {
+  content:'';
+  display:block;
+  width:60%;
+  height:60%;
+  margin: 20% auto;    
+  border-radius:50%;    
+}
+input[type='radio']:checked:before {
+  background: #A51D21;
+}
