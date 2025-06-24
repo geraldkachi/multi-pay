@@ -6,7 +6,7 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
   AlertDialogTrigger,
- } from "@radix-ui/react-alert-dialog";
+ } from "../ui/alert-dialog";
 import { Trash2, Search } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -17,7 +17,6 @@ interface SearchAndActionsProps {
   selectedRowsCount: number;
   onDeleteSelected: () => void;
 }
-
 const SearchAndActions = ({ 
   searchTerm, 
   onSearchChange, 
@@ -25,7 +24,7 @@ const SearchAndActions = ({
   onDeleteSelected 
 }: SearchAndActionsProps) => {
   return (
-    <div className="mb-6 rounded-lg border bg-card text-card-foreground shadow-sm">
+    <div className="mb-6 rounded-lg bg-card text-card-foreground">
       <div className="pt-6">
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative flex-1 max-w-sm">
@@ -41,7 +40,7 @@ const SearchAndActions = ({
           {selectedRowsCount > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="flex items-center space-x-2">
+                <Button variant="destructive" className="flex items-center space-x-2 bg-[#A73636] text-white">
                   <Trash2 className="h-4 w-4" />
                   <span>Delete Selected ({selectedRowsCount})</span>
                 </Button>
@@ -54,9 +53,9 @@ const SearchAndActions = ({
                     This action cannot be undone.
                   </AlertDialogDescription>
                 </div>
-                <div>
+                <div className="flex items-center space-x-2 mt-4">
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDeleteSelected}>Delete</AlertDialogAction>
+                  <AlertDialogAction className="bg-[#A73636] text-white" onClick={onDeleteSelected}>Delete</AlertDialogAction>
                 </div>
               </AlertDialogContent>
             </AlertDialog>
