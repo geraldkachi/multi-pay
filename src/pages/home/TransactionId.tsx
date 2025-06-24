@@ -239,7 +239,7 @@ const TransactionIdInput = ({
                             </Link>
                         </Button>
                         <Button
-                            className="flex items-center space-x-2"
+                            className="flex items-center space-x-2 bg-[#A51D21] text-white"
                             disabled={validTransactionIds.length === 0}
                             onClick={handleSaveAndContinue}
                         >

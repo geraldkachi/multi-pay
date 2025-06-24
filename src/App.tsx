@@ -5,6 +5,7 @@ import Profile from './pages/profile/Profile';
 import Settings from './pages/settings/Settings';
 import TransactionReferences from './pages/home/TransactionId';
 import PaymentsReview from './pages/home/PaymentsReview';
+import MakePayment from './pages/home/MakePayment';
 // import './App.css'
 // Create a NotFound component
 function NotFound() {
@@ -33,6 +34,8 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/payment-batch-review" element={<PaymentsReview />} />
+        <Route path="/make-payment" element={<MakePayment />} />
+
         {/* <Route path="/about" element={<About />} /> */}
         {/* Add more routes as needed */}
         <Route path="*" element={<NotFound />} />

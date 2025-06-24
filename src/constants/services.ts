@@ -5,8 +5,8 @@ import OtherLogo from "../components/icons/OtherLogo";
 import { Service } from "../types/transaction";
 
 export const services: Service[] = [
-  { id: "NIS", name: "Nigeria Immigration Service (NIS)", icon: NISLogo },
-  { id: "FRSC", name: "Federal Road Safety Commission (FRSC)", icon: FRSCLogo },
-  { id: "CRFFN", name: "Council for the Regulation of Freight Forwarding in Nigeria (CRFFN)", icon: CRFFNLogo },
+  { id: "nis", name: "Nigeria Immigration Service (NIS)", icon: NISLogo },
+  { id: "frsc", name: "Federal Road Safety Commission (FRSC)", icon: FRSCLogo },
+  { id: "crffn", name: "Council for the Regulation of Freight Forwarding in Nigeria (CRFFN)", icon: CRFFNLogo },
   { id: "others", name: "Other", icon: OtherLogo },
 ];
