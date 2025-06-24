@@ -33,7 +33,7 @@ const MakePayment = () => {
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
-
+console.log(selectedServiceId)
   // Load total amount and service info from secure storage or navigation state
   useEffect(() => {
     const loadPaymentData = async () => {
