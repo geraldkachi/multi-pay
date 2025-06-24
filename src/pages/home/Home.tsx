@@ -87,7 +87,7 @@
 
 
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Circle, ArrowLeft, ArrowRight } from "lucide-react";
 import AuthWarp from "../../components/auth";
 import { services } from "../../constants/services";

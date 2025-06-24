@@ -3,7 +3,7 @@ import React from "react";
 interface InputProps {
     id: string;
     name: string;
-    label: string;
+    label?: string;
     placeholder?: string;
     required?: boolean;
     type?: string;
@@ -11,12 +11,15 @@ interface InputProps {
     classLabel?: string;
     onChange?: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     onBlur?: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    // onKeyPress?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    onKeyPress?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement> | undefined
     value?: string | number | undefined;
-    multiline?: boolean; // New prop for multiline support
-    error?: string | boolean | undefined;  // To handle error messages
+    multiline?: boolean;
+    error?: string | boolean | undefined;
     style?: React.CSSProperties;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
+    disabled?: boolean;
 }
 
 const InputField: React.FC<InputProps> = ({
@@ -30,12 +33,14 @@ const InputField: React.FC<InputProps> = ({
     classLabel,
     onChange,
     onBlur,
+    onKeyPress,
     value,
     multiline = false,
     error,
     style,
     prefix,
     suffix,
+    disabled,
 }) => {
     return (
         <div className="relative">
@@ -59,8 +64,10 @@ const InputField: React.FC<InputProps> = ({
                         required={required}
                         onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
                         onBlur={onBlur as React.FocusEventHandler<HTMLInputElement>}
+                        onKeyDown={onKeyPress}
                         className={`block w-full border border-[#D8DAE5] text-gray-900 text-sm  rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-[#A73636]  p-2.5 ${className}`}
                         style={style}
+                        disabled={disabled}
                     />
                 ) : multiline ? (
                     <textarea
@@ -72,6 +79,7 @@ const InputField: React.FC<InputProps> = ({
                             }`}
                         onChange={onChange}
                         onBlur={onBlur}
+                        onKeyDown={onKeyPress}
                         value={value}
                         style={style}
                     />
@@ -86,6 +94,7 @@ const InputField: React.FC<InputProps> = ({
                             }`}
                         onChange={onChange}
                         onBlur={onBlur}
+                        onKeyDown={onKeyPress}
                         value={value}
                     />
                 )}

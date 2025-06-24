@@ -18,9 +18,9 @@ const PaymentsReview = () => {
   const { toast } = useToast();
   
   const [batchData, setBatchData] = useState<BatchTransaction[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm] = useState("");
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
+//   const [isLoading, setIsLoading] = useState(true);
 
   // Get selected service from navigation state
   const selectedServiceId = location.state?.selectedService;
@@ -76,7 +76,7 @@ const PaymentsReview = () => {
           const sanitizedBatchData = validateAndSanitizeJsonData(newBatchData);
           setBatchData(sanitizedBatchData);
           await secureStorage.setItem('batchData', JSON.stringify(sanitizedBatchData));
-          setIsLoading(false);
+        //   setIsLoading(false);
           return;
         }
 
@@ -87,7 +87,7 @@ const PaymentsReview = () => {
           return;
         }
 
-      } catch (error) {
+      } catch {
         toast({
           title: "Error",
           description: "Failed to load batch data",

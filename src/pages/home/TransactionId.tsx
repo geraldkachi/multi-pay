@@ -90,7 +90,7 @@ const TransactionIdInput = ({
                     variant: "destructive",
                 });
             }
-        } catch (error) {
+        } catch {
             onUpdateTransactionId(newId.id, { isValid: false, isValidating: false });
             toast({
                 title: "Error",
@@ -179,6 +179,7 @@ const TransactionIdInput = ({
                             id="transaction-id"
                             className='w-full'
                             value={currentInput}
+                            name=''
                             onChange={(e) => setCurrentInput(e.target.value)}
                             onKeyPress={handleKeyPress}
                             placeholder="Enter transaction reference"

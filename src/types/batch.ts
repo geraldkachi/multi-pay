@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface BatchTransaction {
   id: string;
   referenceId: string;

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { secureStorage } from '@/lib/secureStorage';
-import { validateAndSanitizeJsonData } from '@/lib/dataValidation';
+import { validateAndSanitizeJsonData } from '../lib/dataValidation';
+import { secureStorage } from '../lib/secureStorage';
+// import { secureStorage } from '@/lib/secureStorage';
+// import { validateAndSanitizeJsonData } from '@/lib/dataValidation';
 
 /**
  * Hook for secure storage with encryption and validation
