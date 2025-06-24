@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, CreditCard, Building2, Smartphone, University } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { secureStorage } from "../../lib/secureStorage";
@@ -191,16 +191,27 @@ const MakePayment = () => {
 
         {/* Back Button */}
         <div className="flex justify-center">
-          <Button variant="outline" className="flex items-center space-x-2 w-full" asChild>
+          {/* <Button variant="outline" className="flex items-center space-x-2" asChild>
             <Link 
               to="/payment-batch-review" 
               className="flex items-center space-x-2"
+              onClick={() => navigate('/payment-batch-review', { 
+                state: { selectedService: selectedServiceId } 
+                })}
               state={{ selectedService: selectedServiceId }}
             >
               <ArrowLeft className="h-4 w-4 border-4" />
               <span>Back to Review</span>
             </Link>
-          </Button>
+          </Button> */}
+           <Button 
+    variant="outline" 
+    className="flex items-center space-x-2 w-full"
+    onClick={() => navigate(-1)}
+  >
+    <ArrowLeft className="h-4 w-4" />
+    <span>Back to Review</span>
+  </Button>
         </div>
       </div>
     </AuthWarp>
