@@ -8,7 +8,7 @@ import { generateBatchData } from '../../utils/batchUtils';
 import { secureStorage } from '../../lib/secureStorage';
 import { BatchTransaction } from '../../types/batch';
 import BatchHeader from '../../components/batch/BatchHeader';
-// import SearchAndActions from '../../components/batch/SearchAndActions';
+import SearchAndActions from '../../components/batch/SearchAndActions';
 import TransactionTable from '../../components/batch/TransactionTable';
 import NavigationButtons from '../../components/batch/NavigationButtons';
 
@@ -18,7 +18,7 @@ const PaymentsReview = () => {
   const { toast } = useToast();
   
   const [batchData, setBatchData] = useState<BatchTransaction[]>([]);
-  const [searchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 //   const [isLoading, setIsLoading] = useState(true);
 
@@ -146,30 +146,56 @@ const PaymentsReview = () => {
   };
 
   // Handle delete selected rows
-//   const handleDeleteSelected = async () => {
-//     try {
-//       const remainingData = batchData.filter(transaction => !selectedRows.has(transaction.id));
-//       const sanitizedData = validateAndSanitizeJsonData(remainingData);
-//       setBatchData(sanitizedData);
-//       await secureStorage.setItem('batchData', JSON.stringify(sanitizedData));
-//       setSelectedRows(new Set());
+  const handleDeleteSelected = async () => {
+    try {
+      const remainingData = batchData.filter(transaction => !selectedRows.has(transaction.id));
+      const sanitizedData = validateAndSanitizeJsonData(remainingData);
+      setBatchData(sanitizedData);
+      await secureStorage.setItem('batchData', JSON.stringify(sanitizedData));
+      setSelectedRows(new Set());
       
-//       toast({
-//         title: "Success",
-//         description: `Deleted ${selectedRows.size} transaction(s)`,
-//       });
-//     } catch (error) {
-//       toast({
-//         title: "Error",
-//         description: "Failed to delete transactions",
-//         variant: "destructive",
-//       });
-//     }
-//   };
+      toast({
+        title: "Success",
+        description: `Deleted ${selectedRows.size} transaction(s)`,
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete transactions",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!selectedService) {
     return null;
   }
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+  try {
+    const remainingData = batchData.filter(transaction => transaction.id !== transactionId);
+    const sanitizedData = validateAndSanitizeJsonData(remainingData);
+    setBatchData(sanitizedData);
+    await secureStorage.setItem('batchData', JSON.stringify(sanitizedData));
+    
+    // Also remove from selected rows if it was selected
+    const newSelection = new Set(selectedRows);
+    newSelection.delete(transactionId);
+    setSelectedRows(newSelection);
+    
+    toast({
+      title: "Success",
+      description: "Transaction deleted successfully",
+    });
+  } catch {
+    toast({
+      title: "Error",
+      description: "Failed to delete transaction",
+      variant: "destructive",
+    });
+  }
+};
+
 
 //   if (isLoading) {
 //     return (
@@ -189,12 +215,12 @@ const PaymentsReview = () => {
       <div className="max-w-6xl mx-auto">
         <BatchHeader selectedService={selectedService} transactionCount={batchData.length} />
         
-        {/* <SearchAndActions
+        <SearchAndActions
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           selectedRowsCount={selectedRows.size}
           onDeleteSelected={handleDeleteSelected}
-        /> */}
+        />
 
         <TransactionTable 
           filteredData={filteredData}
@@ -203,6 +229,7 @@ const PaymentsReview = () => {
           onRowSelect={handleRowSelect}
           onSelectAll={handleSelectAll}
           totalSum={totalSum}
+          onDeleteTransaction={handleDeleteTransaction} // Add this
         />
 
         <NavigationButtons
