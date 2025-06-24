@@ -20,6 +20,7 @@ interface TransactionTableProps {
   onRowSelect: (transactionId: string, checked: boolean) => void;
   onSelectAll: (checked: boolean) => void;
   totalSum: number;
+  onDeleteTransaction?: (transactionId: string) => void; // Add this
 }
 
 const TransactionTable = ({ 
@@ -28,7 +29,8 @@ const TransactionTable = ({
   selectedRows, 
   onRowSelect, 
   onSelectAll, 
-  totalSum 
+  totalSum,
+  onDeleteTransaction,
 }: TransactionTableProps) => {
   const isAllSelected = filteredData.length > 0 && selectedRows.size === filteredData.length;
 
@@ -83,7 +85,7 @@ const TransactionTable = ({
                     <TableCell className="text-right">{formatCurrency(transaction.charges)}</TableCell>
                     <TableCell className="text-right font-medium">{formatCurrency(transaction.subTotal)}</TableCell>
                     <TableCell>
-                      <TransactionDialog transaction={transaction} />
+                      <TransactionDialog transaction={transaction}  onDelete={onDeleteTransaction} />
                     </TableCell>
                   </TableRow>
                 ))}
