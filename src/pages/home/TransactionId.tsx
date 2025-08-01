@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TransactionId } from '../../types/transaction';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { services } from '../../constants/services';
 import AuthWarp from '../../components/auth';
 import { Check, X, Loader2, ArrowLeft, ArrowRight, Plus } from 'lucide-react';
 import InputField from '../../components/input';
-import { validateTransactionId } from '../../lib/dataValidation';
 import { useToast } from '../../hooks/use-toast';
 import { Button } from '../../components/ui/button';
+import { validateBatchReferences, validateReference } from '../../utils/axios';
+
+const MAX_REFERENCES = 10; // Changed from 20 to 10
+const REFERENCE_LENGTH = 16; // Reference length is now 16 characters
 
 const TransactionIdInput = ({
     transactionIds,
@@ -16,24 +19,48 @@ const TransactionIdInput = ({
     onUpdateTransactionId,
     isValidating,
     onValidatingChange,
-    selectedService,
     onRemoveTransactionId,
-    selectedServiceId
 }: {
     transactionIds: TransactionId[];
     onAddTransactionId: (newId: TransactionId) => void;
     onUpdateTransactionId: (id: string, updates: Partial<TransactionId>) => void;
     isValidating: boolean;
     onValidatingChange: (validating: boolean) => void;
-    selectedService: typeof services[0];
     onRemoveTransactionId: (id: string) => void;
-    selectedServiceId: string;
 }) => {
     const [currentInput, setCurrentInput] = useState("");
     const { toast } = useToast();
     const navigate = useNavigate();
-    const IconComponent = selectedService.icon;
     const validTransactionIds = transactionIds.filter(tid => tid.isValid);
+    const hasAutoValidated = useRef(false);
+
+    const validateTransactionId = async (reference: string) => {
+        try {
+            const response = await validateReference(reference);
+            return response || false;
+        } catch (error) {
+            console.error("Validation error:", error);
+            throw error;
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setCurrentInput(value);
+
+        // Reset auto-validation flag if user modifies the input
+        if (value.length !== REFERENCE_LENGTH) {
+            hasAutoValidated.current = false;
+        }
+    };
+
+    const handleKeyUp = (e: React.KeyboardEvent) => {
+        // Auto-validate when reaching exactly 16 characters
+        if (currentInput.length === REFERENCE_LENGTH && !hasAutoValidated.current) {
+            hasAutoValidated.current = true;
+            handleAddTransactionId();
+        }
+    };
 
     const handleAddTransactionId = async () => {
         if (!currentInput.trim()) {
@@ -45,10 +72,20 @@ const TransactionIdInput = ({
             return;
         }
 
-        if (transactionIds.length >= 20) {
+        // Explicit length check
+        if (currentInput.length !== REFERENCE_LENGTH) {
+            toast({
+                title: "Invalid Length",
+                description: `Transaction ID must be exactly ${REFERENCE_LENGTH} characters`,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (transactionIds.length >= MAX_REFERENCES) {
             toast({
                 title: "Limit Reached",
-                description: "You can add up to 20 Transaction IDs only",
+                description: `You can add up to ${MAX_REFERENCES} Transaction IDs only`,
                 variant: "destructive",
             });
             return;
@@ -99,56 +136,70 @@ const TransactionIdInput = ({
             });
         } finally {
             onValidatingChange(false);
+            hasAutoValidated.current = false; // Reset for next input
         }
     };
-
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            handleAddTransactionId();
-        }
-    };
-
-    const handleSaveAndContinue = async () => {
-        try {
-            const validationResults = await Promise.all(
-                validTransactionIds.map(tid => validateTransactionId(tid.value))
-            );
-
-            const allValid = validationResults.every(isValid => isValid);
-
-            if (!allValid) {
-                toast({
-                    title: "Validation Error",
-                    description: "Some transaction IDs are invalid",
-                    variant: "destructive",
-                });
-                return;
-            }
-
-            if (validTransactionIds.length === 0) {
-                toast({
-                    title: "No Transactions",
-                    description: "Please add at least one valid transaction ID",
-                    variant: "destructive",
-                });
-                return;
-            }
-
-            navigate('/payment-batch-review', {
-                state: {
-                    selectedService: selectedServiceId,
-                    transactionIds: validTransactionIds.map(t => t.value)
-                }
-            });
-        } catch (error) {
-            console.error('Failed to proceed:', error);
+    
+const handleSaveAndContinue = async () => {
+    try {
+        if (validTransactionIds.length === 0) {
             toast({
-                title: "Error",
-                description: "Failed to save transaction IDs",
+                title: "No Transactions",
+                description: "Please add at least one valid transaction ID",
                 variant: "destructive",
             });
+            return;
         }
-    };
+
+        onValidatingChange(true);
+
+        // Get all references to validate
+        const references = validTransactionIds.map(t => t.value);
+
+        // Perform batch validation
+        const response = await validateBatchReferences(references);
+        console.log(response, 'validationResults');
+        console.log(references, 'references');
+
+        // Check if we have valid payment data
+        if (!response.payments || response.payments.length === 0) {
+            toast({
+                title: "Validation Error",
+                description: "No payment data found for the provided transaction IDs",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Check if all payments are unpaid
+        const allUnpaid = response.payments.every((payment: any) => payment.status === 'unpaid');
+        if (!allUnpaid) {
+            toast({
+                title: "Payment Status Error",
+                description: "Some transactions have already been paid",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // All valid - proceed to next step
+        navigate('/payment-batch-review', {
+            state: {
+                transactionIds: validTransactionIds.map(t => t.value),
+                paymentDetails: response // Pass the entire payment details to the next page
+            }
+        });
+    } catch (error: any) {
+        console.error('Failed to proceed:', error);
+        toast({
+            title: "Error",
+            description: error.message || "Failed to validate transaction IDs",
+            variant: "destructive",
+        });
+    } finally {
+        onValidatingChange(false);
+    }
+};
 
     return (
         <div className="mb-8 bg-white">
@@ -157,19 +208,19 @@ const TransactionIdInput = ({
                     <div className="mb-16">
                         <h1 className="text-2xl font-semibold text-foreground mb-4">Transaction References</h1>
                         <p className="text-muted-foreground text-[#474D66] text-xs">
-                            You can enter up to 20 transaction references for multiple payments: ({transactionIds.length} of 20)
+                            You can enter up to {MAX_REFERENCES} transaction references: ({transactionIds.length} of {MAX_REFERENCES})
                         </p>
 
                         <div className="flex items-center justify-start space-x-3 mb-4 rounded-[4px] py-4 px-4 bg-[#F4F6FA] mt-10">
                             <div className="p-2 bg-primary/10 rounded-lg">
-                                <IconComponent className="h-6 w-6 text-primary" />
+                                {/* Removed service icon */}
                             </div>
-                            <span className="text-xs font-medium leading-4 text-foreground">{selectedService.name}</span>
+                            <span className="text-xs font-medium leading-4 text-foreground">Transaction References</span>
                         </div>
 
                         <div className="flex items-center justify-start space-x-3 mb-4">
                             <img src="life" alt="" />
-                            <span className="text-xs">Transaction ID/References are generated on NIS portal</span>
+                            <span className="text-xs">Transaction ID/References must be {REFERENCE_LENGTH} characters</span>
                         </div>
                     </div>
 
@@ -179,16 +230,29 @@ const TransactionIdInput = ({
                             id="transaction-id"
                             className='w-full'
                             value={currentInput}
-                            name=''
-                            onChange={(e) => setCurrentInput(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder="Enter transaction reference"
-                            disabled={isValidating || transactionIds.length >= 20}
+                            name='transactionId'
+                            onChange={handleInputChange}
+                            onKeyUp={handleKeyUp}
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddTransactionId()}
+                            placeholder={`Enter ${REFERENCE_LENGTH}-character transaction reference`}
+                            disabled={isValidating || transactionIds.length >= MAX_REFERENCES}
+                            maxLength={REFERENCE_LENGTH}
+                            error={currentInput.length > 0 && currentInput.length !== REFERENCE_LENGTH ?
+                                `Reference must be exactly ${REFERENCE_LENGTH} characters` : undefined}
                         />
+
+                        <div className="flex items-center justify-between mt-1">
+                            <span className="text-xs text-muted-foreground">
+                                {currentInput.length}/{REFERENCE_LENGTH} characters
+                            </span>
+                            {currentInput.length === REFERENCE_LENGTH && (
+                                <span className="text-xs text-green-600">✓ Valid length</span>
+                            )}
+                        </div>
 
                         <Button
                             onClick={handleAddTransactionId}
-                            disabled={!currentInput.trim() || isValidating || transactionIds.length >= 20}
+                            disabled={!currentInput.trim() || isValidating || transactionIds.length >= MAX_REFERENCES}
                             className="px-6 w-fit bg-transparent text-[#A73636]"
                         >
                             <Plus className="h-4 w-4 text-[#A73636] size-2" />
@@ -243,8 +307,10 @@ const TransactionIdInput = ({
                             disabled={validTransactionIds.length === 0}
                             onClick={handleSaveAndContinue}
                         >
-                            <span>Save & Continue</span>
-                            <ArrowRight className="h-4 w-4 ml-2" />
+                            <>
+                                <span>Save & Continue</span>
+                                <ArrowRight className="h-4 w-4 ml-2" />
+                            </>
                         </Button>
                     </div>
                 </div>
@@ -259,15 +325,10 @@ const TransactionReferences = () => {
     const navigate = useNavigate();
     const [transactionIds, setTransactionIds] = useState<TransactionId[]>([]);
     const [isValidating, setIsValidating] = useState(false);
-
-    const selectedServiceId = location.state?.selectedService;
-    const selectedService = services.find(s => s.id === selectedServiceId);
     const incomingTransactionIds = location.state?.transactionIds || [];
 
     useEffect(() => {
-        if (!selectedService) {
-            navigate("/");
-        } else if (incomingTransactionIds.length > 0) {
+        if (incomingTransactionIds.length > 0) {
             const recreatedTransactions = incomingTransactionIds.map((refId: any, index: any) => ({
                 id: `restored_${index}_${refId}`,
                 value: refId,
@@ -276,7 +337,7 @@ const TransactionReferences = () => {
             }));
             setTransactionIds(recreatedTransactions);
         }
-    }, [selectedService, navigate, incomingTransactionIds]);
+    }, [incomingTransactionIds]);
 
     const handleAddTransactionId = (newId: TransactionId) => {
         setTransactionIds(prev => [...prev, newId]);
@@ -294,12 +355,6 @@ const TransactionReferences = () => {
         setTransactionIds(prev => prev.filter(tid => tid.id !== idToRemove));
     };
 
-    // const validTransactionIds = transactionIds.filter(tid => tid.isValid);
-
-    if (!selectedService) {
-        return null;
-    }
-
     return (
         <AuthWarp>
             <div className="max-w-full mx-auto p-6">
@@ -309,9 +364,7 @@ const TransactionReferences = () => {
                     onUpdateTransactionId={handleUpdateTransactionId}
                     isValidating={isValidating}
                     onValidatingChange={setIsValidating}
-                    selectedService={selectedService}
                     onRemoveTransactionId={handleRemoveTransactionId}
-                    selectedServiceId={selectedServiceId}
                 />
             </div>
         </AuthWarp>

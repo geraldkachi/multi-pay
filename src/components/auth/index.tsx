@@ -8,9 +8,11 @@ import Sidebar from '../sidebar';
 
 const links = [
     { name: "Purchases", icon: "/active-purchase.svg", path: "/" },
-    { name: "Saved cards/bank", icon:"/saved-cards.svg", path: "/profile" },
-    { name: "Settings", icon: "/settings-side.svg", path: "/settings" },
+    // { name: "Saved cards/bank", icon:"/saved-cards.svg", path: "/profile" },
+    // { name: "Settings", icon: "/settings-side.svg", path: "/settings" },
   ];
+
+  // valid ref.  zdtB0sGaJKBx
   interface AppLayoutProps {
   children: ReactNode;
   // showProgress?: boolean;

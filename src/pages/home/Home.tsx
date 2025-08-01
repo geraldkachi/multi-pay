@@ -1,91 +1,3 @@
-// "use client"
-// import AuthWarp from '../../components/auth';
-// const Page = () => {
-
-//   return (
-//     <AuthWarp>
-//       <div className="text-center mb-8">
-//         <h1 className="text-3xl font-bold text-foreground mb-2">Service portal</h1>
-//         <p className="text-muted-foreground">Select the service you want to make payment for</p>
-//       </div>
-
-//       {/* Service Selection */}
-//       <Card className="mb-8 max-w-2xl mx-auto">
-//         <div className='flex flex-col space-y-1.5 p-6'>
-//           <div className="text- text-2xl font-semibold leading-none tracking-tight">Choose a service</div>
-//         </div>
-//         <CardContent>
-//           <RadioGroup value={selectedService} onValueChange={setSelectedService}>
-//             <div className="space-y-4">
-//               {services.map((service) => {
-//                 const IconComponent = service.icon;
-//                 return (
-//                   <div key={service.id} className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-//                     <RadioGroupItem value={service.id} id={service.id} />
-//                     <Label htmlFor={service.id} className="flex items-center space-x-3 cursor-pointer flex-1">
-//                       <div className="p-2 bg-primary/10 rounded-lg">
-//                         <IconComponent className="h-6 w-6 text-primary" />
-//                       </div>
-//                       <span className="text-lg font-medium">{service.name}</span>
-//                     </Label>
-//                   </div>
-//                 );
-//               })}
-//             </div>
-//           </RadioGroup>
-//         </CardContent>
-//       </Card>
-//     </AuthWarp>
-//   )
-// }
-
-// export default Page
-
-
-// "use client"
-// import AuthWarp from '../../components/auth';
-// const Page = () => {
-
-//   return (
-//     <AuthWarp>
-//       <div className="text-center mb-8">
-//         <h1 className="text-3xl font-bold text-foreground mb-2">Service portal</h1>
-//         <p className="text-muted-foreground">Select the service you want to make payment for</p>
-//       </div>
-
-//       {/* Service Selection */}
-//       <Card className="mb-8 max-w-2xl mx-auto">
-//         <div className='flex flex-col space-y-1.5 p-6'>
-//           <div className="text- text-2xl font-semibold leading-none tracking-tight">Choose a service</div>
-//         </div>
-//         <CardContent>
-//           <RadioGroup value={selectedService} onValueChange={setSelectedService}>
-//             <div className="space-y-4">
-//               {services.map((service) => {
-//                 const IconComponent = service.icon;
-//                 return (
-//                   <div key={service.id} className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-//                     <RadioGroupItem value={service.id} id={service.id} />
-//                     <Label htmlFor={service.id} className="flex items-center space-x-3 cursor-pointer flex-1">
-//                       <div className="p-2 bg-primary/10 rounded-lg">
-//                         <IconComponent className="h-6 w-6 text-primary" />
-//                       </div>
-//                       <span className="text-lg font-medium">{service.name}</span>
-//                     </Label>
-//                   </div>
-//                 );
-//               })}
-//             </div>
-//           </RadioGroup>
-//         </CardContent>
-//       </Card>
-//     </AuthWarp>
-//   )
-// }
-
-// export default Page
-
-
 "use client";
 import { useState } from "react";
 import { Circle, ArrowLeft, ArrowRight } from "lucide-react";
@@ -102,6 +14,9 @@ export default function ServicePortal() {
   //     console.log("Proceeding with service:", selectedService);
   //   }
   // };
+
+  // curl -X POST
+  //  https://4b2e-102-89-83-38.ngrok-free.app/api/v1/transaction/multipay/initializepaymulti -H "Content-Type: application/json" -d "{\"email\": \"joyyy2@example.com\", \"amount\": 124, \"metadata\": [{\"payment\": \"passport fee\"}], \"business_id\": 17, \"callback_url\": \"https://webhook.site/b1af3913-6b7f-49d7-ab94-da3e87ea647e\", \"currency\": \"NGN\", \"is_live\": false, \"bearer\": \"test\", \"channels\": [\"card\"], \"remember_card\": false, \"status\": \"unpaid\"}"
    const handleGetStarted = () => {
     if (selectedService) {
       // navigate("/transaction-references", { 
