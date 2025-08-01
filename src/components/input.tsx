@@ -11,8 +11,9 @@ interface InputProps {
     classLabel?: string;
     onChange?: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     onBlur?: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-    // onKeyPress?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-    onKeyPress?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement> | undefined
+    onKeyUp?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    onKeyPress?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     value?: string | number | undefined;
     multiline?: boolean;
     error?: string | boolean | undefined;
@@ -20,6 +21,8 @@ interface InputProps {
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
     disabled?: boolean;
+    maxLength?: number;
+    autoFocus?: boolean;
 }
 
 const InputField: React.FC<InputProps> = ({
@@ -33,7 +36,9 @@ const InputField: React.FC<InputProps> = ({
     classLabel,
     onChange,
     onBlur,
+    onKeyUp,
     onKeyPress,
+    onKeyDown,
     value,
     multiline = false,
     error,
@@ -41,15 +46,27 @@ const InputField: React.FC<InputProps> = ({
     prefix,
     suffix,
     disabled,
+    maxLength,
+    autoFocus,
 }) => {
+    // Combine all keyboard events into a single handler if needed
+    const handleKeyEvents = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        onKeyPress?.(e);
+        onKeyUp?.(e);
+        onKeyDown?.(e);
+    };
+
     return (
         <div className="relative">
-            <label
-                htmlFor={id}
-                className={`block mb-1 text-sm font-medium text-gray-900 ${classLabel}`}
-            >
-                {label}
-            </label>
+            {label && (
+                <label
+                    htmlFor={id}
+                    className={`block mb-1 text-sm font-medium text-gray-900 ${classLabel}`}
+                >
+                    {label}
+                    {required && <span className="text-red-500"> *</span>}
+                </label>
+            )}
             <div className="relative">
                 {prefix && (
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -64,8 +81,8 @@ const InputField: React.FC<InputProps> = ({
                         required={required}
                         onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
                         onBlur={onBlur as React.FocusEventHandler<HTMLInputElement>}
-                        onKeyDown={onKeyPress}
-                        className={`block w-full border border-[#D8DAE5] text-gray-900 text-sm  rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-[#A73636]  p-2.5 ${className}`}
+                        onKeyDown={handleKeyEvents}
+                        className={`block w-full border border-[#D8DAE5] text-gray-900 text-sm rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-[#A73636] p-2.5 ${className}`}
                         style={style}
                         disabled={disabled}
                     />
@@ -75,13 +92,17 @@ const InputField: React.FC<InputProps> = ({
                         name={name}
                         placeholder={placeholder}
                         required={required}
-                        className={`shadow-sm bg-transparent border border-[#D8DAE5] text-gray-900 text-sm rounded-lg focus:ring-0 outline-none focus:border-[#A73636] block w-full p-2.5 ${className} ${error ? "border-red-500" : ""
-                            }`}
+                        className={`shadow-sm bg-transparent border border-[#D8DAE5] text-gray-900 text-sm rounded-lg focus:ring-0 outline-none focus:border-[#A73636] block w-full p-2.5 ${className} ${error ? "border-red-500" : ""}`}
                         onChange={onChange}
                         onBlur={onBlur}
-                        onKeyDown={onKeyPress}
+                        onKeyUp={onKeyUp}
+                        onKeyPress={onKeyPress}
+                        onKeyDown={onKeyDown}
                         value={value}
                         style={style}
+                        disabled={disabled}
+                        maxLength={maxLength}
+                        autoFocus={autoFocus}
                     />
                 ) : (
                     <input
@@ -90,12 +111,17 @@ const InputField: React.FC<InputProps> = ({
                         name={name}
                         placeholder={placeholder}
                         required={required}
-                        className={`shadow-sm bg-transparent border border-[#D8DAE5] text-gray-900 text-sm rounded-lg focus:ring-0 outline-none focus:border-[#A73636] block w-full p-2.5 ${className} ${error ? "border-red-500" : ""
-                            }`}
+                        className={`shadow-sm bg-transparent border border-[#D8DAE5] text-gray-900 text-sm rounded-lg focus:ring-0 outline-none focus:border-[#A73636] block w-full p-2.5 ${className} ${error ? "border-red-500" : ""}`}
                         onChange={onChange}
                         onBlur={onBlur}
-                        onKeyDown={onKeyPress}
+                        onKeyUp={onKeyUp}
+                        onKeyPress={onKeyPress}
+                        onKeyDown={onKeyDown}
                         value={value}
+                        style={style}
+                        disabled={disabled}
+                        maxLength={maxLength}
+                        autoFocus={autoFocus}
                     />
                 )}
                 {suffix && (
@@ -106,6 +132,11 @@ const InputField: React.FC<InputProps> = ({
             </div>
             {error && typeof error === "string" && (
                 <p className="mt-1 text-sm text-red-500">{error}</p>
+            )}
+            {maxLength && typeof value === "string" && (
+                <p className="mt-1 text-xs text-gray-500 text-right">
+                    {value.length}/{maxLength}
+                </p>
             )}
         </div>
     );
