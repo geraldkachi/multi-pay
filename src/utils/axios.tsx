@@ -57,7 +57,6 @@ const httpClient = async ({ method, url, data, contentType }: HttpConfig) => {
 export default httpClient;
 
 
-
 interface ValidationResponse {
   isValid: boolean;
   message?: string;
@@ -141,33 +140,6 @@ export const validateReference = async (reference: string): Promise<ValidationRe
   }
 };
 
-
-
-// export const validateBatchReferences = async (references: string[]): Promise<Record<string, boolean>> => {
-// export const validateBatchReferences = async (references: string[]): Promise<PaymentDetailsResponse> => {
-//   try {
-//     const response = await httpClient({
-//       method: 'post',
-//       url: 'multipay/fetch-details',
-//       data: {
-//         references
-//       }
-//     });
-
-//      if (!response.data?.payments) {
-//       throw new Error("Invalid response format");
-//     }
-
-//     return response.data;
-//   } catch (error) {
-//     if (axios.isAxiosError(error)) {
-//       throw new Error(error.response?.data?.message || "Failed to validate references");
-//     }
-//     throw new Error("An unexpected error occurred");
-//   }
-// };
-
-
 export const validateBatchReferences = async (references: string[]): Promise<PaymentDetailsResponse> => {
   try {
     // console.log('Sending batch validation request with references:', references);
@@ -238,7 +210,7 @@ export const initializePayment = async (references: string[]) => {
         }
       });
       return response.data as PaymentInitializationResponse;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment initialization failed:', error);
       throw new Error(
         error.response?.data?.message ||
