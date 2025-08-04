@@ -1,59 +1,89 @@
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Link } from "react-router-dom";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { BatchTransaction } from "../../types/batch";
 import { Button } from "../ui/button";
 import { secureStorage } from "../../lib/secureStorage";
-import { validateServiceId } from "../../lib/dataValidation";
-
+import { useToast } from "../../hooks/use-toast";
+import { initializePayment } from "../../utils/axios";
+import { useState } from "react";
 
 interface NavigationButtonsProps {
-  selectedServiceId: string;
   batchData: BatchTransaction[];
   totalSum: number;
 }
 
-// const NavigationButtons = ({ selectedServiceId, batchData, totalSum }: NavigationButtonsProps) => {
-const NavigationButtons = ({ selectedServiceId, batchData, totalSum }: NavigationButtonsProps) => {
-  console.log(selectedServiceId, 'selectedServiceId')
-  const navigate = useNavigate();
+const NavigationButtons = ({ batchData, totalSum }: NavigationButtonsProps) => {
+  const { toast } = useToast();
+    const [isProcessing, setIsProcessing] = useState(false);
+
 
   const handleProceedToPayment = async () => {
+      setIsProcessing(true);
     try {
-      // Validate service ID before storing
-      if (!validateServiceId(selectedServiceId)) {
-        throw new Error('Invalid service ID');
+      // Store transaction references for potential return
+      await secureStorage.setItem(
+        'transactionReferences', 
+        JSON.stringify(batchData.map(t => t.referenceId))
+      );
+
+       // Initialize payment with all references
+      const paymentResponse = await initializePayment(
+        batchData.map(t => t.referenceId)
+      );
+      if (paymentResponse.status && paymentResponse.data?.payment_url) {
+         toast({
+          title: "Payment Initialized Successfully",
+          description: paymentResponse.message || "Redirecting to payment gateway...",
+          variant: "success", // Success variant
+        });
+        // Redirect to payment URL
+        window.location.href = paymentResponse.data.payment_url;
+      } else {
+         toast({
+        title: "Error",
+        description: paymentResponse.message || "Failed to initialize payment",
+        variant: "destructive",
+      });
+        throw new Error(paymentResponse.message || 'Payment initialization failed');
       }
-      
-      // // Store selected service ID securely for the payment page
-      await secureStorage.setItem('selectedServiceId', selectedServiceId);
-      navigate('/make-payment', { state: { totalAmount: totalSum } });
 
-      // window.location.href = 'https://staging-widget.ce-nextgen.com/payment-pages/87Q7DOghPVVLQR7v';
-
-      // navigate('https://staging-widget.ce-nextgen.com//payment-pages/87Q7DOghPVVLQR7v', { state: { totalAmount: totalSum } });
-    } catch (error) {
-      console.error('Failed to store service ID:', error);
+    } catch (error: any ) {
+      toast({
+        title: "Error",
+        description: error.message  || "Failed to proceed to payment",
+        variant: "destructive",
+      });
+      console.error('Payment navigation error:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   return (
     <div className="flex justify-between">
-      <Button variant="outline" className="flex items-center space-x-2" asChild>
-        <Link className="flex items-center gap-2.5" to="/transaction-references" state={{ 
-          selectedService: selectedServiceId,
-          transactionIds: batchData.map(t => t.referenceId)
-        }}>
+      <Button 
+        variant="outline" 
+        className="flex items-center space-x-2" 
+        asChild
+      >
+        <Link 
+          className="flex items-center gap-2.5" 
+          to="/"
+          state={{ transactionIds: batchData.map(t => t.referenceId) }}
+        >
           <ArrowLeft className="h-4 w-4" />
           <span>Back</span>
         </Link>
       </Button>
+      
       <Button 
-        className="flex items-center space-x-2 px-8 sm:-x-16 cursor-pointer bg-[#A51D21] text-white rounded-[4px]" 
-        // disabled={batchData.length === 0}
+        className="flex items-center px-8 sm:px-16 cursor-pointer bg-[#A51D21] text-white rounded-[4px]" 
         onClick={handleProceedToPayment}
+        disabled={batchData.length === 0 }
       >
-        <span>Pay</span>
-        {/* <ArrowRight className="h-4 w-4" /> */}
+      {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
+      <span className="whitespace-nowrap">Pay {totalSum > 0 ? `$${totalSum.toFixed(2)}` : ''}</span>
       </Button>
     </div>
   );

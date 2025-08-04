@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import AuthWarp from '../../components/auth'
-import { services } from '../../constants/services';
+import AuthWarp from '../../components/auth';
 import { useToast } from '../../hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { validateAndSanitizeJsonData, validateTransactionId } from '../../lib/dataValidation';
-import { generateBatchData } from '../../utils/batchUtils';
+import { validateAndSanitizeJsonData } from '../../lib/dataValidation';
 import { secureStorage } from '../../lib/secureStorage';
 import { BatchTransaction } from '../../types/batch';
 import BatchHeader from '../../components/batch/BatchHeader';
@@ -12,100 +10,86 @@ import SearchAndActions from '../../components/batch/SearchAndActions';
 import TransactionTable from '../../components/batch/TransactionTable';
 import NavigationButtons from '../../components/batch/NavigationButtons';
 
+interface PaymentDetails {
+  payments: Array<{
+    reference: string;
+    amount: number;
+    currency: string;
+    email: string;
+    status: string;
+    metadata?: string;
+  }>;
+}
+
 const PaymentsReview = () => {
-   const location = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [batchData, setBatchData] = useState<BatchTransaction[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-//   const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Get selected service from navigation state
-  const selectedServiceId = location.state?.selectedService;
-  const selectedService = services.find(s => s.id === selectedServiceId);
-
-  // Load and generate batch data
+  // Get payment details from navigation state
+  const paymentDetails = location.state?.paymentDetails as PaymentDetails | undefined;
+  // Load and generate batch data from payment details
   useEffect(() => {
     const loadBatchData = async () => {
       try {
-        // Get transaction IDs from secure storage
-        // const storedTransactionIds = await secureStorage.getItem('validTransactionIds');
-        // if (!storedTransactionIds) {
-        // //   navigate('/transaction-references');
-        //   return;
-        // }
+        setIsLoading(true);
 
-        // const transactionIds = JSON.parse(storedTransactionIds);
-        
-        // // Validate transaction IDs
-        // const validIds = transactionIds.filter((id: string) => validateTransactionId(id));
-        // if (validIds.length === 0) {
-        // //   navigate('/transaction-references');
-        //   return;
-        // }
+        if (paymentDetails?.payments) {
+          // Transform payment details into batch transactions
+          const transactions = paymentDetails.payments.map(payment => ({
+            id: `txn_${payment.reference}`,
+            referenceId: payment.reference,
+            customerName: payment.email.split('@')[0] || 'Customer',
+            customerEmail: payment.email,
+            applicationFee: 0,
+            // applicationFee: calculateFee(payment.amount),
+            // charges: calculateCharges(payment.amount),
+            charges:  0,
+            subTotal: payment.amount,
+            status: payment.status === 'unpaid' ? 'pending' : payment.status,
+            currency: payment.currency
+          }));
 
-        // // Check if we already have batch data for these IDs
-        // const storedBatchData = await secureStorage.getItem('batchData');
-        // if (storedBatchData) {
-        //   const parsedData = JSON.parse(storedBatchData);
-        //   const sanitizedData = validateAndSanitizeJsonData(parsedData);
-          
-        //   // Verify the data matches current transaction IDs
-        //   if (sanitizedData.length === validIds.length) {
-        //     setBatchData(sanitizedData);
-        //     setIsLoading(false);
-        //     return;
-        //   }
-        // }
-
-        // // Generate new batch data
-        // const newBatchData = generateBatchData(validIds);
-        // const sanitizedBatchData = validateAndSanitizeJsonData(newBatchData);
-        // setBatchData(sanitizedBatchData);
-        // await secureStorage.setItem('batchData', JSON.stringify(sanitizedBatchData));
-        // setIsLoading(false);
-
-         if (location.state?.transactionIds) {
-          const transactionIds = location.state.transactionIds;
-          const validIds = transactionIds.filter((id: string) => validateTransactionId(id));
-          
-          // Generate and set batch data
-          const newBatchData = generateBatchData(validIds);
-          const sanitizedBatchData = validateAndSanitizeJsonData(newBatchData);
-          setBatchData(sanitizedBatchData);
-          await secureStorage.setItem('batchData', JSON.stringify(sanitizedBatchData));
-        //   setIsLoading(false);
-          return;
+          const sanitizedData = validateAndSanitizeJsonData(transactions);
+          setBatchData(sanitizedData);
+          await secureStorage.setItem('batchData', JSON.stringify(sanitizedData));
+        } else {
+          // Fallback to secureStorage if no payment details
+          const storedBatchData = await secureStorage.getItem('batchData');
+          if (storedBatchData) {
+            setBatchData(validateAndSanitizeJsonData(JSON.parse(storedBatchData)));
+          } else {
+            throw new Error('No payment data available');
+          }
         }
-
-        // Fallback to secureStorage if no navigation state
-        const storedTransactionIds = await secureStorage.getItem('validTransactionIds');
-        if (!storedTransactionIds) {
-          navigate('/transaction-references');
-          return;
-        }
-
       } catch {
         toast({
           title: "Error",
-          description: "Failed to load batch data",
+          description: "Failed to load payment data",
           variant: "destructive",
         });
-        navigate('/transaction-references');
+        navigate('/');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadBatchData();
-  }, [navigate, toast]);
+  }, [navigate, toast, paymentDetails]);
 
-  // Redirect if no service selected
-  useEffect(() => {
-    if (!selectedService) {
-    //   navigate("/");
-    }
-  }, [selectedService, navigate]);
+  // Helper functions for fee calculations
+  // const calculateFee = (amount: number): number => {
+  //   return Math.floor(amount * 0.02); // 2% fee
+  // };
+
+  // const calculateCharges = (amount: number): number => {
+  //   return Math.floor(amount * 0.01); // 1% charges
+  // };
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
@@ -114,6 +98,7 @@ const PaymentsReview = () => {
     return batchData.filter(transaction =>
       transaction.referenceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.applicationFee.toString().includes(searchTerm) ||
       transaction.charges.toString().includes(searchTerm) ||
       transaction.subTotal.toString().includes(searchTerm)
@@ -138,11 +123,7 @@ const PaymentsReview = () => {
 
   // Handle select all
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedRows(new Set(filteredData.map(t => t.id)));
-    } else {
-      setSelectedRows(new Set());
-    }
+    setSelectedRows(checked ? new Set(filteredData.map(t => t.id)) : new Set());
   };
 
   // Handle delete selected rows
@@ -167,53 +148,70 @@ const PaymentsReview = () => {
     }
   };
 
-  if (!selectedService) {
-    return null;
-  }
-
+  // Handle delete single transaction
   const handleDeleteTransaction = async (transactionId: string) => {
-  try {
-    const remainingData = batchData.filter(transaction => transaction.id !== transactionId);
-    const sanitizedData = validateAndSanitizeJsonData(remainingData);
-    setBatchData(sanitizedData);
-    await secureStorage.setItem('batchData', JSON.stringify(sanitizedData));
-    
-    // Also remove from selected rows if it was selected
-    const newSelection = new Set(selectedRows);
-    newSelection.delete(transactionId);
-    setSelectedRows(newSelection);
-    
-    toast({
-      title: "Success",
-      description: "Transaction deleted successfully",
-    });
-  } catch {
-    toast({
-      title: "Error",
-      description: "Failed to delete transaction",
-      variant: "destructive",
-    });
+    try {
+      const remainingData = batchData.filter(transaction => transaction.id !== transactionId);
+      const sanitizedData = validateAndSanitizeJsonData(remainingData);
+      setBatchData(sanitizedData);
+      await secureStorage.setItem('batchData', JSON.stringify(sanitizedData));
+      
+      // Remove from selected rows if it was selected
+      setSelectedRows(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(transactionId);
+        return newSet;
+      });
+      
+      toast({
+        title: "Success",
+        description: "Transaction deleted successfully",
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete transaction",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AuthWarp>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading payment data...</p>
+          </div>
+        </div>
+      </AuthWarp>
+    );
   }
-};
 
-
-//   if (isLoading) {
-//     return (
-//       <AuthWarp>
-//         <div className="flex items-center justify-center min-h-96">
-//           <div className="text-center">
-//             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-//             <p className="text-muted-foreground">Loading batch data...</p>
-//           </div>
-//         </div>
-//       </AuthWarp>
-//     );
-//   }
+  if (batchData.length === 0) {
+    return (
+      <AuthWarp>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <p className="text-muted-foreground">No payment transactions found</p>
+            <button 
+              onClick={() => navigate('/transaction-references')}
+              className="mt-4 text-primary hover:underline"
+            >
+              Add new transactions
+            </button>
+          </div>
+        </div>
+      </AuthWarp>
+    );
+  }
 
   return (
     <AuthWarp>
       <div className="max-w-6xl mx-auto">
-        <BatchHeader selectedService={selectedService} transactionCount={batchData.length} />
+        <BatchHeader transactionCount={batchData.length} />
         
         <SearchAndActions
           searchTerm={searchTerm}
@@ -229,17 +227,16 @@ const PaymentsReview = () => {
           onRowSelect={handleRowSelect}
           onSelectAll={handleSelectAll}
           totalSum={totalSum}
-          onDeleteTransaction={handleDeleteTransaction} // Add this
+          onDeleteTransaction={handleDeleteTransaction}
         />
 
         <NavigationButtons
-          selectedServiceId={selectedServiceId}
           batchData={batchData}
           totalSum={totalSum}
         />
       </div>
     </AuthWarp>
-  )
-}
+  );
+};
 
-export default PaymentsReview
+export default PaymentsReview;

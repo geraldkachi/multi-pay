@@ -3,6 +3,7 @@ export interface TransactionId {
   value: string;
   isValid: boolean;
   isValidating: boolean;
+  paymentDetails: any
 }
 
 export interface Service {
