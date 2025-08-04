@@ -33,7 +33,6 @@ const PaymentsReview = () => {
 
   // Get payment details from navigation state
   const paymentDetails = location.state?.paymentDetails as PaymentDetails | undefined;
-console.log(paymentDetails, 'paymentDetails')
   // Load and generate batch data from payment details
   useEffect(() => {
     const loadBatchData = async () => {
@@ -75,7 +74,6 @@ console.log(paymentDetails, 'paymentDetails')
           variant: "destructive",
         });
         navigate('/');
-        // navigate('/transaction-references');
       } finally {
         setIsLoading(false);
       }
@@ -168,6 +166,7 @@ console.log(paymentDetails, 'paymentDetails')
       toast({
         title: "Success",
         description: "Transaction deleted successfully",
+        variant: "success",
       });
     } catch {
       toast({

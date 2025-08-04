@@ -3,6 +3,7 @@ export interface BatchTransaction {
   id: string;
   referenceId: string;
   customerName: string;
+  customerEmail: string;
   applicationFee: number;
   charges: number;
   subTotal: number;

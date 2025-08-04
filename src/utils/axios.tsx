@@ -61,7 +61,22 @@ export default httpClient;
 interface ValidationResponse {
   isValid: boolean;
   message?: string;
-  data?: any;
+  data?: {
+    status?: boolean;
+    code?: string;
+    error?: string;
+    message?: string;
+    payment?: {
+      id: number;
+      reference: string;
+      amount: number;
+      currency: string;
+      status: string;
+      email: string;
+      created_at: string;
+      metadata?: string;
+    };
+  };
 }
 
 interface PaymentDetailsResponse {
@@ -84,10 +99,14 @@ interface PaymentInitializationResponse {
   status: boolean;
   message?: string;
   data?: {
-    payment_url: string;
-    reference: string;
     access_code: string;
+    payment_url: string;
+    reference?: string;
+    amount?: number;
+    currency?: string;
+    [key: string]: any; // For any additional fields
   };
+  error?: string;
 }
 
 
@@ -97,12 +116,27 @@ export const validateReference = async (reference: string): Promise<ValidationRe
       method: 'get',
       url: `multipay/verify/${reference}`
     });
+
+    // Handle successful response
     return {
-      isValid: response.data?.isValid ?? false,
+      isValid: response.data?.status === true,
       message: response.data?.message,
       data: response.data
     };
   } catch (error: any) {
+    console.log('validateReference error:', error);
+    
+    // Handle axios errors (API returned an error response)
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const errorData = error.response.data;
+      return {
+        isValid: false,
+        message: errorData.message || errorData.error || 'Invalid payment reference',
+        data: errorData
+      };
+    }
+    
+    // Handle other errors (network issues, etc.)
     throw new Error(error.message || 'Failed to validate reference');
   }
 };
@@ -146,23 +180,17 @@ export const validateBatchReferences = async (references: string[]): Promise<Pay
       }
     });
 
-    // console.log('Raw API response:', response);
-    // console.log('Response data:', response.data);
-
     if (!response || !response.data) {
       throw new Error("No response data received from server");
     }
 
-    // Check if the API returned an error status
     if (response.data.status === false) {
       throw new Error(response.data.message || "API returned error status");
     }
 
-    // Check for payments array - it might be nested in data or at root level
     const payments = response.data.payments || response.data.data?.payments;
     
     if (!payments) {
-      // console.error('No payments found in response. Response structure:', response.data);
       throw new Error("Invalid response format - no payments data found");
     }
 
