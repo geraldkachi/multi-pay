@@ -5,7 +5,7 @@ interface BatchHeaderProps {
   transactionCount: number;
 }
 
-const BatchHeader = ({ selectedService, transactionCount }: BatchHeaderProps) => {
+const BatchHeader = ({ transactionCount }: BatchHeaderProps) => {
   // const IconComponent = selectedService.icon;
 
   return (
