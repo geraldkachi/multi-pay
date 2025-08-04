@@ -42,7 +42,7 @@ const TransactionIdInput = ({
         }
     };
 
-    const handleKeyUp = (e: React.KeyboardEvent) => {
+    const handleKeyUp = () => {
         if (currentInput.length === REFERENCE_LENGTH && !hasAutoValidated.current) {
             hasAutoValidated.current = true;
             handleAddTransactionId();
