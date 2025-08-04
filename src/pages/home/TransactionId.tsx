@@ -292,14 +292,13 @@ const TransactionIdInput = ({
                             disabled={validTransactionIds.length === 0 || isValidating}
                             onClick={handleSaveAndContinue}
                         >
-                            {isValidating ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <>
+                            {
+                                <>{isValidating &&
+                                <Loader2 className="h-4 w-4 animate-spin" />}
                                     <span>Save & Continue</span>
                                     <ArrowRight className="h-4 w-4 ml-2" />
                                 </>
-                            )}
+                            }
                         </Button>
                     </div>
                 </div>

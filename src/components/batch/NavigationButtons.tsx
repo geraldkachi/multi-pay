@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { BatchTransaction } from "../../types/batch";
@@ -47,7 +48,7 @@ const NavigationButtons = ({ batchData, totalSum }: NavigationButtonsProps) => {
         throw new Error(paymentResponse.message || 'Payment initialization failed');
       }
 
-    } catch (error : any) {
+    } catch (error: any ) {
       toast({
         title: "Error",
         description: error.message  || "Failed to proceed to payment",
